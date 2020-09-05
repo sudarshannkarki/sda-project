@@ -1,0 +1,487 @@
+-Full payment integration
+-Ability for users to shop as a registered user or as a guest
+	-users can access all items and add them to cart(no of selected itmes should be presented on the cart icon on the top right corner or any other corner)
+	-check out(shipping info/payment type/delivery duration/delivery timeline/increase or decrease items with live total price and unit price)
+	-users can create an account(login/logout)
+	-automate the confirmation of emails
+-Users can write reviews
+	-ability to select 'USEFUL' or 'NOT USEFUL' kind of things
+-Ablity to put a complaint directly to the seller and the main company itself
+-Ability to establish a communication between the buyer and the seller
+-What our client say about us
+-Subscription
+-New arrivals
+Weather
+-Technologies used:
+	-Python
+	-Django
+	-Django React
+	-REST API (to make cart count)
+	-HTML
+	-CSS
+	-JavaScript
+
+Note:
+models.py is used only when we have to work with backend.
+
+CSS: flex, 
+class="btn btn-success",
+class="btn btn-success btn-block",
+class="btn btn-outline-dark",
+class="col-lg-12",
+class="box-element",
+<a style="float;right; margin:5px"......>,
+<div class="col-lg-6">,
+<div class="row">,
+<div class="box-element hidden",
+form or table with white background,
+jsonresponse page
+post method
+fetch API
+json (json.stringify)
+<img data-product={{ item.product.id }} data-action="add"...>
+<img ... class="chg-quantity update-cart" ...>
+document.getElementById('form-button').classList.add('hidden');
+print('Data:', request.body)
+-------------------------------------------------- 
+
+Task chunks:
+-click on the button to add item
+-show cart count
+-increase/decrease item quantity in cart.html
+-hide shipping address if only diigtal items are in cart
+-guest user cart count data is stored in browser cookie not in the database
+-logged user cart info is stored in database.
+-logged in user keeps an item in the cart and than the item is deleted from the database then cart of logged-in user shows error.
+
+---------------------------------------------------------------------
+-django.contrib.auth.models
+-DRY (Dont Repeat Yourself) concept is used (Video-4 @ 36:06)
+-Pagination (Check if i have done-looks like placeholders are pagination)
+
+-----------------------------------------------------------------------
+steps:
+-create virutal environment
+python -m venv NAME
+
+-create project
+django-admin startproject NAME
+
+-create app
+django-app startapp NAME
+
+-configure the app 
+goto project's setting.py> INSTALLED_APPS >'name.apps.NameConfig',
+
+-create a folder called 'templates' within app folder
+app-folder>templates
+-create another folder called app-name within templates
+ app-folder>templates>app-name
+
+-create required templates 
+main.html
+store.html
+cart.html
+checkout.html
+
+-in views.py, create three functions/views
+def store()
+def cart()
+def checkout()
+
+-configure url
+create urls.py within app folder
+create ulrs for the templates inside urls.py of app folder
+goto the main urls.py of the project and write urls to point to the urls which are in urls.py of app folder.
+
+-Run the server and check if all the templates are being rendered well
+ 
+
+000000000000000000000000000000000000000000000000
+
+CONFIGURE STATIC FILES
+
+-create a folder called static with in the root directory
+site1>site1, storeapp, static, db.sqlite3, manage.py
+
+-create another folder called css and within css, create another file called main.css:
+inside main.css, change the background colour to blue. It is just to check if the main.css file is configured well and works correctly. After checking you can remove this this blue colour.
+-goto setting.py and at the very last
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
+-extends this css file from templates
+{% load static %}
+<link rel="stylesheet", type="text/css" href="{% static 'css/main.css' %}">
+
+-create another folder called images within static folder and put one picture of cart there.
+-to render picture, go to store.html and type <img> tag.
+{% load static %}
+<link rel="stylesheet", type="text/css" href="{% static 'css/main.css' %}">
+<h1>Store</h1>
+<img src="{% static 'images/cart.png' %}">
+It is just to check if inserting picture works well. After checking you can remove this picture.
+
+Making boiler plate within main.html/base.html
+
+00000000000000000000000000000000000000000000
+Backend
+-make models in models.py
+-migrate database
+	python manage.py makemigrations
+	python manage.py migrate
+-add the models to the admin panel
+	from .models import *
+	admin.site.register(CustomerMdl)
+	admin.site.register(ProductMdl)
+	admin.site.register(OrderMdl)
+	admin.site.register(OrderItemMdl)
+	admin.site.register(ShippingAddressMdl)
+-Creae a super user (To see all the tables and add items)
+	python manage.py createsuperuser
+-Run the server, goto admin and login
+	Now, we can see our app name and all models under the app name
+-Add new items within Product mdls
+-update store function within views.py
+def store(request):
+    products = ProductMdl.objects.all()
+    context = {'products': products}
+    return render(request, 'store/store.html', context)
+-Goto store.html template
+	Keep only one placeholder and remove the rest.
+	Put that one placeholder/content within a loop. {% for product in products%}
+.....
+....
+{% endfor %}
+	Retrive data from the database like price. ${{ product.price|floatformat:2 }}
+-Add images to placeholders
+install Pillow to deal with pictures properly
+pip install pillow
+Goto settings.py and type at last
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+goto admin panel and add pictures. Added pictures will be stored within static folder automatically.
+To access each image :
+goto settings.py and write at second last line
+MEDIA_URL = '/images/'
+goto projects urls.py and 
+from django.conf.urls.static import static
+from django.conf import settings 
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+goto store.html and change src attribute to display content/items from the database:
+<img class="thumbnail" src="{{ product.image.url }}">
+-run server and check
+-Now still we have one problem, if any product does not have its images added to database then website shows error as image can not be rendered. To solve this problem:
+goto models.py under ProductMdl, at last, add a function:
+    @property
+    def imageURL(self):
+        try:
+            url = self.image.url
+        except:
+            url = ''
+        return url
+then goto store.html and update the src attribute one more time:
+<img class="thumbnail" src="{{ product.imageURL }}">
+ 
+00000000000000000000000000
+cart:
+-goto admin panel.
+-Under Customer mdls, create one customer
+-Under Order mdls, create one order
+-Under Order item mdls, create two orders
+-Now, to render this data:
+in views.py, update cart function:
+def cart(request):
+# backend ----------------------------
+    if request.user.is_authenticated:
+        customer = request.user.customermdl
+        order, created = OrderMdl.objects.get_or_create(customer=customer, complete=False)
+        items = order.orderitemmdl_set.all()
+    #  here order is a parent value (field in OrderItemMdl model) which referes to Ordermdl object(parent table) as a foreign key
+    # here, orderitemmdl is OrderItemMdl object(child table)
+    else:
+        items = []
+    context = {'items': items}
+# backend ----------------------------
+# frontend ----------------------------
+#     context = {}
+    return render(request, 'store/cart.html', context)
+# frontend ----------------------------
+Now goto cart.html:
+update src attribute, product name, product price, product quantity:
+<div style="flex:2"><img class="row-image" src="{{ item.product.imageURL }}"></div>
+                <div style="flex:2">{{ item.product.name }}</div>
+                <div style="flex:1">${{  item.product.price|floatformat:2 }}</div>
+                <div style="flex:1">
+
+                    <p class="quantity">{{ item.quantity }}</p>
+
+Now, lets calculate total amount and render it:
+Under OrderItemMdl in models.py:
+to get total amount of an item if the same item is purchased more than 1.
+    @property
+    def get_total(self):
+        total = self.product.price * self.quantity
+        return total
+Goto cart.html and update total price:
+<div style="flex:1">${{ item.get_total }}</div>
+Run the server and check
+Under OrderItemMdl in models.py, add two more functions:
+1.to get total price to pay by adding total amount of all items:
+    @property
+    def get_cart_total(self):
+        orderitems = self.orderitemmdl_set.all()
+        total = sum([item.get_total for item in orderitems])
+        return total
+2.to get total items ordered by a customer:
+    @property
+    def get_cart_items(self):
+        orderitems = self.orderitemmdl_set.all()
+        total = sum([item.quantity for item in orderitems])
+        return total
+Now, goto views.py under cart function, make some updates in context variable:
+context = {'items': items, 'order': order} 
+Try to render this much from cart.html updating total item number and total price to pay:
+<th><h5>Item: <strong>{{ order.get_cart_items }}</strong></h5></th>
+                    <th><h5>Total: <strong>${{ order.get_cart_total|floatformat:2 }}</strong></h5></th>
+Run the server and check.
+But here is one problem this much will show an issue in case the user is not logged in. So, goto admin panel then log out and refresh cart.html and we can see issue.
+To solve this problem make little more updates under cart funtion within views.py, make  order dictionary manually in else block:
+    else:
+        items = []
+        order = {'get_cart_total':0, 'get_cart_items':0}
+    context = {'items': items, 'order': order}
+Now, refresh cart.html and page should display with 0 items and 0 total price. However, this page is up without any issue.
+Now, goto admin panel and login and refresh cart.html and see the difference.
+000000000000000000
+Checkout page:
+Now, we have show the same data of cart (toal items and toal price to pay) in checkout.html.
+Goto to checkout function under views.py and make updates(same if...else code from cart function as we are trying to display same data)
+def checkout(request):
+    # backend ----------------------------
+    if request.user.is_authenticated:
+        customer = request.user.customermdl
+        order, created = OrderMdl.objects.get_or_create(customer=customer, complete=False)
+        items = order.orderitemmdl_set.all()
+    #  here order is a parent value (field in OrderItemMdl model) which referes to Ordermdl object(parent table) as a foreign key
+    # here, orderitemmdl is OrderItemMdl object(child table)
+    else:
+        items = []
+        order = {'get_cart_total': 0, 'get_cart_items': 0}
+    context = {'items': items, 'order': order}
+    # backend ----------------------------
+    # frontend ----------------------------
+    #     context = {}
+    return render(request, 'store/checkout.html', context)
+# frontend ----------------------------
+
+Now, goto checkout.html to render data.
+Update Items and Total:
+Run the server and check.
+Again in checkout.html create row for each item just like in cart.html:
+{% for item in items %}
+<div class="cart-row">
+	<div style="flex:2"><img class="row-image" src="{{ item.product.imageURL }}"></div>
+	<div style="flex:2"><p>{{ item.product.name }}</p></div>
+	<div style="flex:1"><p>${{ item.product.price|floatformat:2 }}</p></div>
+	<div style="flex:1"><p>x{{ item.quantity }}</p></div>
+</div>
+{% endfor %}
+<h5>Items: {{ order.get_cart_items }}</h5>
+<h5>Total: ${{ order.get_cart_total|floatformat:2 }}</h5>
+Run the server and check.
+
+Video 2 over...............................................
+
+Video 3 starts........................................
+ADDING TO CART:
+-Create a folder js within static folder
+-Create cart.js within js folder
+-Goto main.html and write this just before the </body>:
+<script type="text/javascript" src="{% static 'js/cart.js' %}"></script>
+-Goto store.html and update <button>:
+Here, when the button is clicked then it takes the id of the product and adds it to the cart.
+                <button data-product={{ product.id }} data-action='add' class="btn btn-outline-secondary add-btn update-cart">
+                    Add to Cart
+                </button>
+-Goto cart.js:
+// adding to the cart
+
+var updateBtns = document.getElementsByClassName('update-cart')
+
+for(var i = 0; i < updateBtns.length; i++)
+{
+    updateBtns[i].addEventListener
+    (
+    'click', function()
+    {
+    var productId = this.dataset.product
+    var action = this.dataset.action
+// here this is like self in python. this represents the button itself which is clicked
+    console.log('productId:-', productId, 'action:-', action)
+
+    console.log('User:-', user)
+    if (user == 'AnonymousUser')
+    {
+        console.log('User is not logged in.')
+    }
+    else
+    {
+        console.log('User is logged in, sending data...')
+    }
+    }
+    )
+}
+-Check
+-Goto main.html(base.html) and just before closing the </head>:
+    <script type="text/javascript">
+        var user = '{{ request.user }}'        
+    </script>
+-Goto cart.js and add one more console.log just after previous console.log:
+console.log('User:-', user) 
+-Check
+-Again, if condition:
+The whole code again:
+// adding to the cart
+
+var updateBtns = document.getElementsByClassName('update-cart')
+
+for(var i = 0; i < updateBtns.length; i++)
+{
+    updateBtns[i].addEventListener
+    (
+    'click', function()
+    {
+    var productId = this.dataset.product
+    var action = this.dataset.action
+    // here this is like self in python. this represents the button itself which is clicked
+    console.log('productId:-', productId, 'action:-', action)
+
+    console.log('User:-', user)
+    if (user == 'AnonymousUser')
+    {
+        console.log('User is not logged in.')
+    }
+    else
+    {
+        console.log('User is logged in, sending data...')
+    }
+    }
+    )
+}
+
+-Now let's set a url for adding item to cart.
+Here we are trying to pop a message after an item is added to the cart.
+>First goto views.py and import JsonResponse:
+from django.http import JsonResponse
+>Then make a function called update_item():
+def update_item(request):
+    return JsonResponse('Item added', safe=False)
+>Goto app urls.py and add a url:
+path('update-item/', views.update_item, name='store-update-item'),
+>Goto cart.js and make a function called updateUserOrder(productionId, action) and update if condition:
+The whole code again:
+// adding to the cart
+
+var updateBtns = document.getElementsByClassName('update-cart')
+
+for(var i = 0; i < updateBtns.length; i++)
+{
+    updateBtns[i].addEventListener
+    (
+    'click', function()
+    {
+    var productId = this.dataset.product
+    var action = this.dataset.action
+    // here this is like self in python. this represents the button itself which is clicked
+    console.log('productId:-', productId, 'action:-', action)
+
+    console.log('User:-', user)
+    if (user == 'AnonymousUser')
+    {
+        console.log('User is not logged in.')
+        )
+    }
+    else
+    {
+        //console.log('User is logged in, sending data...')
+        updateUserOrder(productId, action
+    }
+    }
+    )
+}
+
+function updateUserOrder(productId, action)
+{
+    console.log('User is logged in, sending data...')
+
+    var url = '/update-item/'
+// This url comes from app urls, from this line of code: path('update-item/', views.update_item, name='store-update-item'),
+    fetch(url, {
+        method: 'POST',
+        headers:{
+            'Content-Type': 'application/json'
+        },
+        body:JSON.stringify({'productId:-': productId, 'action:-': action})
+    })
+    .then((response) =>{
+        return response.json()
+    })
+    .then((data) =>{
+        console.log('data:', data)
+    })
+}
+-Check
+>The above code still shows issues on the console as it can not catch promise and csrf token as <form> can while sending post to the database. We cant use form here as we are in javascript environment in this particular cart.js file. So, to resolve this problem goto https://docs.djangoproject.com/en/3.0/ref/csrf/ and copy the code of 'function getCookie(name)' and paste in <head> inside <script> section under main/base.html:
+    <!-- adding to the cart -->
+    <script type="text/javascript">
+        var user = '{{ request.user }}'
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+    </script>
+</head>
+>Then goto cart.js and update the function updateUserOrder(productID, action):
+fetch(url, {
+        method: 'POST',
+        headers:{
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+        },
+>Check, the issue should have gone by now and displays, on the console, the new message with item added.
+>Rename the function getCookie to getToken within main/base.html in order to use the same name cookie for guest customer as well:
+renaming at starting the function
+   function getToken(name) 
+
+renaming at the last:
+   var csrftoken = getToken('csrftoken');
+>Now, goto views.py and update the function update_item():
+First import json:
+import json
+
+Then update the function
+def update_item(request):
+    data = json.load(request.data)
+    productId = data['productId']
+    action = data['action']
+
+    print('Action:', action)
+    print('ProductId:', productId)
+    return JsonResponse('Item added', safe=False)
+>Open command promt and console together and check by clicking on buttons
+
+
+

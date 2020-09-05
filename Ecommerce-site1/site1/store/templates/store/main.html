@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <title>PahiranRamro</title>
+    <!-- CSS only -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+
+    <!--
+    <meta charset="UTF-8">
+    -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+    <!-- Add to cart button
+    function getCookie(name)-->
+    <script type="text/javascript">
+        var user = '{{ request.user }}'
+
+        function getToken(name)
+            {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '')
+                {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++)
+                    {
+                    var cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '='))
+                        {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        var csrftoken = getToken('csrftoken');
+
+        //Cookie for guest - 1
+        function getCookie(name) {
+            //Split cookie string and get all individual name=value pairs in an array
+            var cookieArr = document.cookie.split(';');
+
+            //Loop through the array elements
+            for (var i = 0; i < cookieArr.length; i++) {
+                var cookiePair = cookieArr[i].split('=');
+
+                // Removing whitespace at the beginning of the cookie name
+                // and compare it with the given string.
+                if (name == cookiePair[0].trim()) {
+                    //Decode the cookie value and return
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            //Return null if not found
+            return null;
+        }
+
+        var cart = JSON.parse(getCookie('cart'))
+        //If the cart is null/undefined then create an empty cart ( cart = {} )
+        if (cart == undefined) {
+            cart = {}
+            console.log('Cart has been created.', cart)
+            //Creating actual browser cookie
+            document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
+            //Heer, we have to make cart string in order to use it.
+        }
+
+        console.log('Cart:', cart)
+        //Cookie for guest - 1 - close
+    </script>
+
+</head>
+
+<body>
+
+    <style>
+        .hello-msg{
+            font-size: 18px;
+            color: #fff;
+            margin-right: 20px;
+        }
+        .navbar .navbar-brand .logo-text span{
+            color: #05f7ff;
+        }
+    </style>
+
+<!--    NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="{% url 'store-home' %}">
+          <h1 class="logo-text"><span>Pahiran</span>Ramro</h1>
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'store-home' %}">Home
+                <span class="sr-only">(current)</span>
+            </a>
+          </li>
+        </ul>
+
+	    <div class="form-inline my-2 my-lg-0">
+            {% if user.is_authenticated %}
+                <div>
+                    <span class="hello-msg" id="usernamedisplay">
+                        Welocme, {{ request.user }}!
+                    </span>
+                    <span>
+                        <a class="btn btn-warning"  href="{% url 'store-logout' %}">Logout</a>
+                    </span>
+                </div>
+            {% else %}
+                <div>
+                    <span class="hello-msg" id="usernamedisplay">
+                        Hello, Guest!
+                    </span>
+                    <span>
+                        <a class="btn btn-warning" href="{% url 'store-login' %}">Login</a>
+                    </span>
+                    <span class="btn btn-success">
+                        &nbsp; Create New Account &nbsp; <a class="btn btn-warning" href="{% url 'store-register' %}">Sign Up</a>
+                    </span>
+                </div>
+            {% endif %}
+            <br>
+            <!--
+            <span>
+                <a id="logout" href="{% url 'store-logout' %}">Logout</a>
+            </span>
+            -->
+            <!--
+            <a href="{% url 'store-login' %}" class="btn btn-warning">Login</a>
+            -->
+	     	<a href="{% url 'store-cart' %}">
+	    		<img  id="cart-icon" src="{% static 'images/cart.png' %}">
+	    	</a>
+            <!-- Cart count - 3 - Start -->
+            <!-- 1st 1 variable change  ---- -->
+	    	<p id="cart-total">{{ cartItems }}</p>
+            <!-- Cart count - 3 - Close -->
+	    </div>
+      </div>
+
+    </nav>
+
+
+    <div class="mainbody">
+        {% block content %}
+
+        {% endblock content %}
+    </div>
+
+<!--Footer start-->
+    <style>
+        .mainbody{
+            min-height: 100%;
+        }
+
+        html, body{
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+            background: #f6f6f6;
+            font-family: 'Lora', serif;
+        }
+
+        .btn-big{
+            padding: .7rem 1.3rem;
+            line-height: 1.3rem;
+            background: yellow;
+            outline: none;
+        }
+
+        .footer{
+            background: #303036;
+            color: #d3d3d3;
+            height: 400px;
+            position: relative;
+        }
+
+        .footer .footer-content{
+            //border: 1px solid red;
+            height: 350px;
+            display: flex;
+        }
+
+        .footer .footer-content .footer-section{
+            flex: 1;
+            padding: 25px;
+            //border: 1px solid white;
+        }
+
+        .footer .footer-content h1, .footer .footer-content h2{
+            color: white;
+        }
+
+        .footer .footer-content .about h1 span{
+            color: #05f7ff;
+        }
+
+        .footer .footer-content .about .contact span{
+            display: black;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .footer .footer-content .about .socials a{
+            border: 1px solid gray;
+            width: 45px;
+            height: 41px;
+            padding-top: 5px;
+            margin-right: 5px;
+            text-align: center;
+            display: inline-block;
+            font-size: 1.3em;
+            border-radius: 5px;
+            transition: all .4s;
+        }
+
+        .footer .footer-content .about .socials a:hover{
+            border: 1px solid white;
+            color: white;
+            transition: all .4s;
+        }
+
+        .footer .footer-content .links ul a{
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            transition: all .4s;
+        }
+
+        .footer .footer-content .links ul a:hover{
+            color: white;
+            margin-left: 15px;
+            transition: all .4s;
+        }
+
+        .footer .footer-content .contact-form .contact-input{
+            background: #272727;
+            color: #bebdbd;
+            margin-bottom: 10px;
+            line-height: 1.5rem;
+            padding: .7rem 1.9rem;
+            //border: none;
+        }
+
+        .footer .footer-content .contact-form .contact-input:focus{
+            background: #1a1a1a;
+        }
+
+        .footer .footer-content .contact-form .contact-btn{
+            float: left;
+        }
+
+        .footer .footer-bottom{
+            background: #343a40;
+            color: #686868;
+            height: 50px;
+            width: 100%;
+            text-align: center;
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            padding-top: 20px;
+        }
+    </style>
+
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-section about">
+                <h1 class="logo-text"><span>Pahiran</span>Ramro</h1>
+
+                <p>
+                    PahiranRamro is the creation of the accumulated knowledge,
+                    obtained by the course called ‘Python from the scratch’
+                    which was organised by SDA (Software Development Academy), Tallinn, Estonia.
+                </p>
+
+                <div class="contact">
+                    <span><i class="fas fa-map-marker-alt"></i> &nbsp; Kalamaja, Tallinn, Estonia</span>
+                    <br>
+                    <span><i class="fas fa-phone"></i> &nbsp; 111-12345678</span>
+                    <br>
+                    <span><i class="fas fa-envelope"></i> &nbsp; info@pahiran.com</span>
+                </div>
+
+                <div class="socials">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-section links">
+                <h2>Quick Links</h2>
+                <br>
+                <ul>
+                    <a href="#"><li>Events</li></a>
+                    <a href="#"><li>Team</li></a>
+                    <a href="#"><li>Mentors</li></a>
+                    <a href="#"><li>Gallery</li></a>
+                    <a href="#"><li>Terms and Conditions</li></a>
+                    <a href="{% url 'store-weather'%}"><li>Weather</li></a>
+                </ul>
+            </div>
+
+            <div class="footer-section contact-form">
+                <h2>Contact Us</h2>
+                <br>
+
+                <form action="" method="post">
+                    <input type="email" name="email" class="text-input contact-input" placeholder="Your email address...">
+
+                    <textarea name="message" class="text-input contact-input" placeholder="Your message..."></textarea>
+                    <div>
+                        <button type="submit" class="btn btn-big contact-btn">
+                            <i class="fas fa-envelope"></i>
+                        Send
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            &copy; pahiran.com | Designed by SUDARSHAN KARKI
+        </div>
+    </div>
+<!--Footer close-->
+
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+
+
+    <!-- adding to the cart / I made static>js>cart.js and connecting here -->
+    <script type="text/javascript" src="{% static 'js/cart.js' %}"></script>
+
+</body>
+</html>
